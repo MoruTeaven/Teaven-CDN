@@ -1,0 +1,23 @@
+{
+  "name": "cdn-manager-worker",
+  "version": "1.0.0",
+  "description": "CDN Manager Worker",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 execute cdn-manager --file=./src/db/schema.sql",
+    "db:create": "wrangler d1 create cdn-manager"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260526.1",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.94.0"
+  },
+  "dependencies": {
+    "hono": "^4.12.23"
+  }
+}
