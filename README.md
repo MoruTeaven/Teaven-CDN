@@ -1,4 +1,4 @@
-# CDN 管理系统
+# TeavenCDN
 
 个人公共资源 CDN 收藏与管理系统，基于 Cloudflare Worker 构建。
 
@@ -30,8 +30,8 @@
 ## 项目结构
 
 ```
-CDN管理/
-├── worker/              # Worker 后端
+TeavenCDN/
+├── worker/             # Worker 后端
 │   ├── src/
 │   │   ├── routes/     # 路由
 │   │   ├── services/   # 服务层
