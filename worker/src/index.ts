@@ -19,10 +19,6 @@ app.route('/api/search', searchRoute)
 app.route('/api/favorite', favoriteRoute)
 app.route('/api/packages', packagesRoute)
 
-app.get('/', (c) => {
-  return c.text('CDN Manager API')
-})
-
 app.get('/health', (c) => {
   return c.json({ status: 'ok' })
 })
