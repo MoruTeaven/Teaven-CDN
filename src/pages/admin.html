@@ -1633,6 +1633,8 @@
                 renderSearchDropdown();
                 return;
             }
+            state.search.loading = true;
+            renderSearchDropdown();
             searchDebounceTimer = setTimeout(() => searchPackage(), 300);
         }
 
@@ -1669,12 +1671,9 @@
             if (!loading && state.search.error && results.length === 0) {
                 html += `<div class="search-dropdown-empty"><i class="ri-search-line" style="font-size:28px;color:var(--faint);display:block;margin-bottom:8px"></i>${escapeHtml(state.search.error)}</div>`;
             }
-            if (!loading && !state.search.error && results.length === 0 && q) {
-                html += '<div class="search-dropdown-empty"><i class="ri-search-line" style="font-size:28px;color:var(--faint);display:block;margin-bottom:8px"></i>输入关键词开始搜索</div>';
-            }
 
             dropdown.innerHTML = html;
-            dropdown.classList.toggle('open', !!(loading || results.length > 0 || state.search.error));
+            dropdown.classList.toggle('open', !!(q && (loading || results.length > 0 || state.search.error)));
         }
 
         function closeSearchDropdown() {
