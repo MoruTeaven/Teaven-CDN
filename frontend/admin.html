@@ -1,0 +1,2168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeavenCDN 管理后台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f8f9fa;
+            --color-bg-tertiary: #f0f2f5;
+            --color-text-primary: #1a1a1a;
+            --color-text-secondary: #666666;
+            --color-text-tertiary: #999999;
+            --color-border: #e8e8e8;
+            --color-border-light: #f0f0f0;
+            
+            --color-primary: #0066cc;
+            --color-primary-light: #e6f2ff;
+            --color-primary-lighter: #f0f7ff;
+            
+            --color-success: #52c41a;
+            --color-success-light: #f6ffed;
+            --color-warning: #faad14;
+            --color-warning-light: #fffbe6;
+            --color-error: #ff4d4f;
+            --color-error-light: #fff1f0;
+            --color-info: #1890ff;
+            --color-info-light: #e6f7ff;
+
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+            --radius: 8px;
+            --radius-sm: 4px;
+            --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        body.dark-mode {
+            --color-bg-primary: #1a1a1a;
+            --color-bg-secondary: #252525;
+            --color-bg-tertiary: #323232;
+            --color-text-primary: #ffffff;
+            --color-text-secondary: #c0c0c0;
+            --color-text-tertiary: #808080;
+            --color-border: #3a3a3a;
+            --color-border-light: #2a2a2a;
+            
+            --color-primary-light: #1a3a52;
+            --color-primary-lighter: #0d1f2d;
+            --color-success-light: #162312;
+            --color-warning-light: #2b2111;
+            --color-error-light: #2b1515;
+            --color-info-light: #1a2a3a;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            transition: var(--transition);
+        }
+
+        #app {
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background-color: var(--color-bg-primary);
+            border-bottom: 1px solid var(--color-border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex: 1;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-primary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .header-logo:hover {
+            color: var(--color-primary);
+            opacity: 0.8;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--color-primary), #0052a3);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+
+        .breadcrumb-item {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .breadcrumb-item:hover {
+            color: var(--color-primary);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--color-text-primary);
+            font-weight: 500;
+        }
+
+        .breadcrumb-sep {
+            color: var(--color-border);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .search-box {
+            width: 240px;
+            padding: 8px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background-color: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-primary-light);
+            background-color: var(--color-bg-primary);
+        }
+
+        .header-icon-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background-color: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            font-size: 16px;
+        }
+
+        .header-icon-btn:hover {
+            background-color: var(--color-bg-tertiary);
+            color: var(--color-primary);
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 256px;
+            background-color: var(--color-bg-primary);
+            border-right: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            transition: var(--transition);
+        }
+
+        .sidebar.collapsed {
+            width: 64px;
+        }
+
+        .sidebar-toggle {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background-color: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            font-size: 16px;
+            margin: 12px;
+        }
+
+        .sidebar-toggle:hover {
+            background-color: var(--color-bg-tertiary);
+            color: var(--color-primary);
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .menu-item {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--color-text-secondary);
+            font-size: 14px;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .menu-item:hover {
+            background-color: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+        }
+
+        .menu-item.active {
+            background-color: var(--color-primary-light);
+            color: var(--color-primary);
+            font-weight: 500;
+        }
+
+        .menu-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .menu-label {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar.collapsed .menu-label {
+            display: none;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-inner {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin: 0;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .grid.grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        }
+
+        .grid.grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .grid.grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+
+        /* Card */
+        .card {
+            background-color: var(--color-bg-primary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--color-border-light);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin: 0;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            color: var(--color-text-tertiary);
+            margin-top: 4px;
+        }
+
+        .card-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Stats Card */
+        .stat-card {
+            background-color: var(--color-bg-primary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--color-primary);
+        }
+
+        .stat-content h3 {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            margin: 0 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            margin: 0;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .stat-change.up {
+            color: var(--color-success);
+        }
+
+        .stat-change.down {
+            color: var(--color-error);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-icon.primary {
+            background-color: var(--color-primary-light);
+            color: var(--color-primary);
+        }
+
+        .stat-icon.success {
+            background-color: var(--color-success-light);
+            color: var(--color-success);
+        }
+
+        .stat-icon.warning {
+            background-color: var(--color-warning-light);
+            color: var(--color-warning);
+        }
+
+        .stat-icon.error {
+            background-color: var(--color-error-light);
+            color: var(--color-error);
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background-color: var(--color-bg-secondary);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--color-border-light);
+            color: var(--color-text-secondary);
+        }
+
+        tbody tr:hover {
+            background-color: var(--color-bg-secondary);
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .badge.primary {
+            background-color: var(--color-primary-light);
+            color: var(--color-primary);
+        }
+
+        .badge.success {
+            background-color: var(--color-success-light);
+            color: var(--color-success);
+        }
+
+        .badge.warning {
+            background-color: var(--color-warning-light);
+            color: var(--color-warning);
+        }
+
+        .badge.error {
+            background-color: var(--color-error-light);
+            color: var(--color-error);
+        }
+
+        .badge.info {
+            background-color: var(--color-info-light);
+            color: var(--color-info);
+        }
+
+        /* Button */
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background-color: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: var(--color-bg-tertiary);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn.primary {
+            background-color: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .btn.primary:hover:not(:disabled) {
+            background-color: #0052a3;
+            box-shadow: 0 0 0 3px var(--color-primary-light);
+        }
+
+        .btn.success {
+            background-color: var(--color-success);
+            color: white;
+            border-color: var(--color-success);
+        }
+
+        .btn.success:hover:not(:disabled) {
+            background-color: #389e0d;
+        }
+
+        .btn.danger {
+            background-color: var(--color-error);
+            color: white;
+            border-color: var(--color-error);
+        }
+
+        .btn.danger:hover:not(:disabled) {
+            background-color: #d9363e;
+        }
+
+        .btn.ghost {
+            background-color: transparent;
+            border-color: var(--color-border);
+        }
+
+        .btn.ghost:hover {
+            background-color: var(--color-bg-secondary);
+        }
+
+        .btn.small {
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
+        /* Form */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+        }
+
+        .form-label.required::after {
+            content: ' *';
+            color: var(--color-error);
+        }
+
+        .form-control {
+            padding: 8px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-primary-light);
+        }
+
+        .form-control:disabled {
+            background-color: var(--color-bg-secondary);
+            color: var(--color-text-tertiary);
+            cursor: not-allowed;
+        }
+
+        .form-help {
+            font-size: 12px;
+            color: var(--color-text-tertiary);
+        }
+
+        .form-error {
+            font-size: 12px;
+            color: var(--color-error);
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        /* Input Group */
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-group input,
+        .input-group select {
+            flex: 1;
+        }
+
+        /* Flex Utilities */
+        .flex {
+            display: flex;
+            gap: 8px;
+        }
+
+        .flex.gap-sm {
+            gap: 4px;
+        }
+
+        .flex.gap-md {
+            gap: 12px;
+        }
+
+        .flex.gap-lg {
+            gap: 16px;
+        }
+
+        .flex.gap-xl {
+            gap: 24px;
+        }
+
+        .flex.center {
+            align-items: center;
+        }
+
+        .flex.between {
+            justify-content: space-between;
+        }
+
+        .flex.wrap {
+            flex-wrap: wrap;
+        }
+
+        /* Drawer (Mobile Menu) */
+        .drawer {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 256px;
+            background-color: var(--color-bg-primary);
+            border-right: 1px solid var(--color-border);
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-overlay {
+            position: fixed;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .drawer-overlay.open {
+            display: block;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--color-bg-primary);
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            font-size: 24px;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: var(--color-text-primary);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        /* Tab */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--color-border);
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: var(--color-text-primary);
+        }
+
+        .tab.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .pagination-item {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background-color: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .pagination-item:hover:not(.disabled) {
+            background-color: var(--color-bg-tertiary);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .pagination-item.active {
+            background-color: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .pagination-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: var(--color-bg-primary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow-lg);
+            z-index: 3000;
+            animation: slideInUp 0.3s ease;
+            min-width: 300px;
+            max-width: 400px;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-color: var(--color-success);
+            background: linear-gradient(to right, var(--color-success), var(--color-bg-primary));
+            background-clip: padding-box;
+        }
+
+        .toast.error {
+            border-color: var(--color-error);
+            background: linear-gradient(to right, var(--color-error), var(--color-bg-primary));
+            background-clip: padding-box;
+        }
+
+        .toast.warning {
+            border-color: var(--color-warning);
+            background: linear-gradient(to right, var(--color-warning), var(--color-bg-primary));
+            background-clip: padding-box;
+        }
+
+        .toast-content {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .toast-text {
+            font-size: 14px;
+        }
+
+        /* Timeline */
+        .timeline {
+            padding: 0 0 0 24px;
+            border-left: 2px solid var(--color-border);
+            position: relative;
+        }
+
+        .timeline-item {
+            padding: 12px 0 12px 24px;
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 14px;
+            width: 12px;
+            height: 12px;
+            background-color: var(--color-primary);
+            border-radius: 50%;
+            border: 3px solid var(--color-bg-primary);
+        }
+
+        .timeline-time {
+            font-size: 12px;
+            color: var(--color-text-tertiary);
+        }
+
+        .timeline-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            margin: 4px 0;
+        }
+
+        .timeline-desc {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .grid.grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .grid.grid-3 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grid.grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+            }
+
+            .header-left {
+                gap: 12px;
+            }
+
+            .search-box {
+                display: none;
+            }
+
+            .page-title {
+                font-size: 20px;
+            }
+
+            .content-inner {
+                padding: 16px;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 64px;
+                bottom: 0;
+                width: 256px;
+                z-index: 999;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay {
+                position: fixed;
+                left: 0;
+                top: 64px;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 998;
+                display: none;
+            }
+
+            .sidebar-overlay.open {
+                display: block;
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .grid.grid-2,
+            .grid.grid-3,
+            .grid.grid-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                max-width: none;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .page-header .flex {
+                width: 100%;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-logo {
+                font-size: 16px;
+            }
+
+            .logo-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+
+            .page-title {
+                font-size: 18px;
+            }
+
+            .stat-value {
+                font-size: 22px;
+            }
+
+            .breadcrumb {
+                display: none;
+            }
+
+            .toast {
+                bottom: 12px;
+                right: 12px;
+                left: 12px;
+                min-width: auto;
+            }
+        }
+
+        /* Loading Animation */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--color-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-sm { margin-top: 8px; }
+        .mt-md { margin-top: 16px; }
+        .mt-lg { margin-top: 24px; }
+        .mb-sm { margin-bottom: 8px; }
+        .mb-md { margin-bottom: 16px; }
+        .mb-lg { margin-bottom: 24px; }
+        .p-sm { padding: 8px; }
+        .p-md { padding: 16px; }
+        .p-lg { padding: 24px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="menu-toggle" style="display:none; width:36px; height:36px; border:1px solid var(--color-border); border-radius:var(--radius-sm); background-color:var(--color-bg-secondary); color:var(--color-text-primary); cursor:pointer; font-size:18px;" onclick="toggleSidebar()">☰</button>
+                <div class="header-logo" onclick="goToPage('dashboard')">
+                    <div class="logo-icon">C</div>
+                    <span>TeavenCDN</span>
+                </div>
+                <div class="breadcrumb" id="breadcrumb">
+                    <span class="breadcrumb-item active">仪表盘</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <input type="text" class="search-box" id="globalSearch" placeholder="搜索..." style="display:none;">
+                <button class="header-icon-btn" title="帮助" onclick="showToast('帮助文档已发送至邮箱', 'info')">?</button>
+                <button class="header-icon-btn" id="themeToggle" title="切换主题" onclick="toggleTheme()">🌙</button>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <button class="sidebar-toggle" onclick="toggleSidebarCollapse()" title="收起侧边栏">⋮</button>
+                <nav class="sidebar-menu">
+                    <a class="menu-item active" onclick="goToPage('dashboard')">
+                        <span class="menu-icon">📊</span>
+                        <span class="menu-label">仪表盘</span>
+                    </a>
+                    <a class="menu-item" onclick="goToPage('search')">
+                        <span class="menu-icon">🔍</span>
+                        <span class="menu-label">搜索资源</span>
+                    </a>
+                    <a class="menu-item" onclick="goToPage('packages')">
+                        <span class="menu-icon">📦</span>
+                        <span class="menu-label">资源管理</span>
+                    </a>
+                    <a class="menu-item" onclick="goToPage('logs')">
+                        <span class="menu-icon">📋</span>
+                        <span class="menu-label">操作日志</span>
+                    </a>
+                    <a class="menu-item" onclick="goToPage('settings')">
+                        <span class="menu-icon">⚙️</span>
+                        <span class="menu-label">系统设置</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Sidebar Overlay (Mobile) -->
+            <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+            <!-- Main Content -->
+            <div class="content">
+                <div class="content-inner" id="content">
+                    <!-- Content will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">标题</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer" id="modalFooter"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <script>
+        // ==================== Utils ====================
+        const isMobile = () => window.innerWidth <= 768;
+        const isDarkMode = () => document.body.classList.contains('dark-mode');
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDarkMode() ? 'dark' : 'light');
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            document.getElementById('themeToggle').textContent = isDarkMode() ? '☀️' : '🌙';
+        }
+
+        function initTheme() {
+            const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+            updateThemeIcon();
+        }
+
+        function toggleSidebarCollapse() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+
+        function toggleSidebar() {
+            if (isMobile()) {
+                document.getElementById('sidebar').classList.toggle('open');
+                document.getElementById('sidebarOverlay').classList.toggle('open');
+            }
+        }
+
+        function closeSidebar() {
+            if (isMobile()) {
+                document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('sidebarOverlay').classList.remove('open');
+            }
+        }
+
+        function setMenuActive(page) {
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.menu-item').forEach(item => {
+                if (item.getAttribute('onclick').includes(`'${page}'`)) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        function updateBreadcrumb(title) {
+            document.getElementById('breadcrumb').innerHTML = `<span class="breadcrumb-item active">${title}</span>`;
+        }
+
+        // ==================== Page Navigation ====================
+        function goToPage(page) {
+            closeSidebar();
+            setMenuActive(page);
+            renderPage(page);
+        }
+
+        function renderPage(page) {
+            const content = document.getElementById('content');
+
+            switch(page) {
+                case 'dashboard':
+                    updateBreadcrumb('仪表盘');
+                    content.innerHTML = renderDashboard();
+                    break;
+                case 'search':
+                    updateBreadcrumb('搜索资源');
+                    content.innerHTML = renderSearch();
+                    break;
+                case 'packages':
+                    updateBreadcrumb('资源管理');
+                    content.innerHTML = renderPackages();
+                    initPackagesTable();
+                    break;
+                case 'logs':
+                    updateBreadcrumb('操作日志');
+                    content.innerHTML = renderLogs();
+                    break;
+                case 'settings':
+                    updateBreadcrumb('系统设置');
+                    content.innerHTML = renderSettings();
+                    break;
+            }
+        }
+
+        // ==================== Page Renderers ====================
+
+        // Dashboard Page
+        function renderDashboard() {
+            return `
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">仪表盘</h1>
+                        <p class="page-subtitle">欢迎使用 TeavenCDN 管理后台</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-4">
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <h3>资源总数</h3>
+                            <p class="stat-value">247</p>
+                            <div class="stat-change up">↑ 12 本月新增</div>
+                        </div>
+                        <div class="stat-icon primary">📦</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <h3>存储占用</h3>
+                            <p class="stat-value">2.4G</p>
+                            <div class="stat-change">约占总配额 48%</div>
+                        </div>
+                        <div class="stat-icon success">💾</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <h3>今日访问</h3>
+                            <p class="stat-value">8.2k</p>
+                            <div class="stat-change up">↑ 15% 较昨日</div>
+                        </div>
+                        <div class="stat-icon warning">👁️</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-content">
+                            <h3>健康状态</h3>
+                            <p class="stat-value" style="color: var(--color-success);">正常</p>
+                            <div class="stat-change">所有服务运行中</div>
+                        </div>
+                        <div class="stat-icon" style="background-color: var(--color-success-light); color: var(--color-success);">✓</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2 mt-lg">
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">最新资源</h3>
+                                <p class="card-subtitle">最近 7 天新增的资源</p>
+                            </div>
+                            <a href="javascript:void(0)" style="color: var(--color-primary); text-decoration: none; font-size: 14px; cursor: pointer;" onclick="goToPage('packages')">查看全部 →</a>
+                        </div>
+                        <div class="card-content">
+                            ${renderRecentPackages()}
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h3 class="card-title">最近操作</h3>
+                                <p class="card-subtitle">系统操作日志</p>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            ${renderRecentLogs()}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-lg">
+                    <div class="card-header">
+                        <div>
+                            <h3 class="card-title">热门资源</h3>
+                            <p class="card-subtitle">访问次数最多的资源</p>
+                        </div>
+                    </div>
+                    ${renderPopularPackages()}
+                </div>
+            `;
+        }
+
+        function renderRecentPackages() {
+            const packages = [
+                { name: 'vue', version: '3.3.4', date: '2024-01-15', size: '34.2 KB' },
+                { name: 'react', version: '18.2.0', date: '2024-01-14', size: '42.5 KB' },
+                { name: 'axios', version: '1.6.2', date: '2024-01-13', size: '28.7 KB' },
+                { name: 'lodash', version: '4.17.21', date: '2024-01-12', size: '71.3 KB' },
+            ];
+
+            return `
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${packages.map(pkg => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background-color: var(--color-bg-secondary); border-radius: var(--radius-sm);">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px;">${pkg.name}</div>
+                                <div style="font-size: 12px; color: var(--color-text-tertiary);">${pkg.date} · ${pkg.size}</div>
+                            </div>
+                            <span class="badge info">${pkg.version}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderRecentLogs() {
+            const logs = [
+                { action: '转存资源', target: 'vue@3.3.4', time: '2 小时前', status: 'success' },
+                { action: '删除资源', target: 'react@17.0.0', time: '5 小时前', status: 'warning' },
+                { action: '转存资源', target: 'axios@1.6.2', time: '1 天前', status: 'success' },
+                { action: '系统设置', target: 'CDN 域名', time: '3 天前', status: 'info' },
+            ];
+
+            return `
+                <div class="timeline">
+                    ${logs.map(log => `
+                        <div class="timeline-item">
+                            <div class="timeline-time">${log.time}</div>
+                            <div class="timeline-title">${log.action}</div>
+                            <div class="timeline-desc">${log.target}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderPopularPackages() {
+            const packages = [
+                { name: 'jquery', visits: 2840, trend: '↑' },
+                { name: 'bootstrap', visits: 2156, trend: '↑' },
+                { name: 'vue', visits: 1987, trend: '↓' },
+                { name: 'react', visits: 1654, trend: '↑' },
+                { name: 'axios', visits: 1432, trend: '→' },
+            ];
+
+            return `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>资源名称</th>
+                                <th style="text-align: right;">访问次数</th>
+                                <th style="text-align: center;">趋势</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${packages.map((pkg, idx) => `
+                                <tr>
+                                    <td style="font-weight: 500;">${idx + 1}. ${pkg.name}</td>
+                                    <td style="text-align: right;">${pkg.visits.toLocaleString()}</td>
+                                    <td style="text-align: center; color: var(--color-success);">${pkg.trend}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Search Page
+        function renderSearch() {
+            return `
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">搜索资源</h1>
+                        <p class="page-subtitle">从 npm 搜索 JS 库资源，转存到 Cloudflare R2</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">搜索 npm 包</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-group">
+                            <label class="form-label required">包名称</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchInput" placeholder="例如：vue、react、axios" style="flex: 1;">
+                                <button class="btn primary" onclick="handleSearch()">🔍 搜索</button>
+                            </div>
+                            <div class="form-help">输入要搜索的 npm 包名，系统会查询可用的版本列表</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-lg" id="searchResult" style="display: none;">
+                    <div class="card-header">
+                        <h3 class="card-title" id="searchResultTitle">搜索结果</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-group">
+                            <label class="form-label required">选择版本</label>
+                            <div class="input-group">
+                                <select class="form-control" id="versionSelect" style="flex: 1;">
+                                    <option value="">-- 选择版本 --</option>
+                                </select>
+                                <button class="btn primary" onclick="handleFavorite()">⭐ 转存到 CDN</button>
+                            </div>
+                            <div class="form-help">选择要转存的版本，系统会自动识别入口文件并转存到 R2</div>
+                        </div>
+                        <div id="packageInfo" style="margin-top: 16px; padding: 16px; background-color: var(--color-bg-secondary); border-radius: var(--radius-sm);"></div>
+                    </div>
+                </div>
+
+                <div class="card mt-lg">
+                    <div class="card-header">
+                        <h3 class="card-title">热门包</h3>
+                        <p class="card-subtitle">常见的前端库资源</p>
+                    </div>
+                    <div class="card-content">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;">
+                            ${['vue', 'react', 'axios', 'lodash', 'dayjs', 'echarts'].map(name => `
+                                <button class="btn ghost" onclick="quickSearch('${name}')" style="height: auto; padding: 12px; flex-direction: column; text-align: center; cursor: pointer;">
+                                    <strong>${name}</strong>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                showToast('请输入包名称', 'warning');
+                return;
+            }
+
+            // Mock search result
+            const mockData = {
+                'vue': {
+                    name: 'vue',
+                    description: '渐进式 JavaScript 框架',
+                    versions: ['3.3.4', '3.3.3', '3.3.2', '3.2.45', '2.7.14'],
+                    latest: '3.3.4'
+                },
+                'react': {
+                    name: 'react',
+                    description: 'JavaScript 库，用于使用声明式组件构建用户界面',
+                    versions: ['18.2.0', '18.1.0', '17.0.2', '16.14.0'],
+                    latest: '18.2.0'
+                },
+                'axios': {
+                    name: 'axios',
+                    description: '基于 Promise 的 HTTP 客户端',
+                    versions: ['1.6.2', '1.6.1', '1.5.0', '1.4.0'],
+                    latest: '1.6.2'
+                }
+            };
+
+            const data = mockData[query.toLowerCase()];
+            if (!data) {
+                showToast('未找到该包，请检查包名', 'warning');
+                return;
+            }
+
+            document.getElementById('searchResultTitle').textContent = `搜索结果: ${data.name}`;
+            const versionSelect = document.getElementById('versionSelect');
+            versionSelect.innerHTML = data.versions.map(v => `<option value="${v}">${v}</option>`).join('');
+            versionSelect.value = data.latest;
+
+            document.getElementById('packageInfo').innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: 16px;">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 8px 0; color: var(--color-text-primary);">${data.name}</h4>
+                        <p style="margin: 0; font-size: 13px; color: var(--color-text-secondary);">${data.description}</p>
+                        <div style="margin-top: 12px; display: flex; gap: 8px;">
+                            <a href="https://www.npmjs.com/package/${data.name}" target="_blank" style="color: var(--color-primary); text-decoration: none; font-size: 12px;">📦 npm 主页</a>
+                            <a href="javascript:void(0)" style="color: var(--color-primary); text-decoration: none; font-size: 12px;">📖 查看文档</a>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 4px;">可用版本</div>
+                        <div style="font-size: 18px; font-weight: 600; color: var(--color-primary);">${data.versions.length}</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('searchResult').style.display = 'block';
+            showToast('搜索成功', 'success');
+        }
+
+        function quickSearch(name) {
+            document.getElementById('searchInput').value = name;
+            handleSearch();
+        }
+
+        function handleFavorite() {
+            const version = document.getElementById('versionSelect').value;
+            if (!version) {
+                showToast('请选择版本', 'warning');
+                return;
+            }
+            showToast(`已将资源转存到 CDN (${document.getElementById('searchInput').value}@${version})`, 'success');
+        }
+
+        // Packages Page
+        function renderPackages() {
+            return `
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">资源管理</h1>
+                        <p class="page-subtitle">管理已转存的 npm 包资源</p>
+                    </div>
+                    <div class="flex gap-md">
+                        <button class="btn primary" onclick="goToPage('search')">+ 新增资源</button>
+                        <button class="btn ghost" onclick="refreshPackages()">🔄 刷新</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">已收藏资源</h3>
+                    </div>
+                    <div class="card-content">
+                        <div style="margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+                            <input type="text" class="form-control" id="pkgSearch" placeholder="搜索包名..." style="flex: 1; min-width: 200px;" onkeyup="filterPackageTable()">
+                            <select class="form-control" id="pkgFilter" style="width: 150px;" onchange="filterPackageTable()">
+                                <option value="">所有状态</option>
+                                <option value="success">正常</option>
+                                <option value="error">异常</option>
+                            </select>
+                        </div>
+                        <div class="table-container">
+                            <table id="packagesTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 25%;">包名</th>
+                                        <th style="width: 12%;">版本</th>
+                                        <th style="width: 18%;">文件名</th>
+                                        <th style="width: 15%;">大小</th>
+                                        <th style="width: 20%;">CDN 链接</th>
+                                        <th style="width: 10%;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="packagesList">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination">
+                            <button class="pagination-item" onclick="prevPage()">←</button>
+                            <span id="pageInfo" style="padding: 8px 12px; color: var(--color-text-secondary);">第 1 页</span>
+                            <button class="pagination-item" onclick="nextPage()">→</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function initPackagesTable() {
+            const packages = [
+                { id: 1, name: 'vue', version: '3.3.4', filename: 'vue.global.prod.js', size: '34.2 KB', created: '2024-01-15' },
+                { id: 2, name: 'react', version: '18.2.0', filename: 'react.production.min.js', size: '42.5 KB', created: '2024-01-14' },
+                { id: 3, name: 'axios', version: '1.6.2', filename: 'axios.min.js', size: '28.7 KB', created: '2024-01-13' },
+                { id: 4, name: 'lodash', version: '4.17.21', filename: 'lodash.min.js', size: '71.3 KB', created: '2024-01-12' },
+                { id: 5, name: 'dayjs', version: '1.11.10', filename: 'dayjs.min.js', size: '2.1 KB', created: '2024-01-11' },
+                { id: 6, name: 'echarts', version: '5.4.3', filename: 'echarts.min.js', size: '156.8 KB', created: '2024-01-10' },
+            ];
+
+            window.allPackages = packages;
+            window.currentPage = 1;
+            window.pageSize = 5;
+            renderPackagesList(packages);
+        }
+
+        function renderPackagesList(packages) {
+            const tbody = document.getElementById('packagesList');
+            tbody.innerHTML = packages.map(pkg => `
+                <tr>
+                    <td><strong>${pkg.name}</strong></td>
+                    <td><span class="badge info">${pkg.version}</span></td>
+                    <td style="font-size: 13px;">${pkg.filename}</td>
+                    <td>${pkg.size}</td>
+                    <td style="font-size: 12px;">
+                        <code style="background-color: var(--color-bg-secondary); padding: 2px 6px; border-radius: 4px;">cdn.example.com/${pkg.name}/${pkg.version}/${pkg.filename}</code>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn ghost small" title="复制链接" onclick="copyLink('cdn.example.com/${pkg.name}/${pkg.version}/${pkg.filename}')">📋</button>
+                            <button class="btn ghost small" title="删除" onclick="deletePackage(${pkg.id}, '${pkg.name}@${pkg.version}')">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            updatePageInfo();
+        }
+
+        function filterPackageTable() {
+            const search = document.getElementById('pkgSearch').value.toLowerCase();
+            const filter = document.getElementById('pkgFilter').value;
+            
+            const filtered = window.allPackages.filter(pkg => {
+                const matchSearch = pkg.name.toLowerCase().includes(search);
+                const matchFilter = !filter || (filter === 'success');
+                return matchSearch && matchFilter;
+            });
+
+            window.currentPage = 1;
+            renderPackagesList(filtered);
+        }
+
+        function prevPage() {
+            if (window.currentPage > 1) {
+                window.currentPage--;
+                updatePageInfo();
+            }
+        }
+
+        function nextPage() {
+            const maxPage = Math.ceil(window.allPackages.length / window.pageSize);
+            if (window.currentPage < maxPage) {
+                window.currentPage++;
+                updatePageInfo();
+            }
+        }
+
+        function updatePageInfo() {
+            document.getElementById('pageInfo').textContent = `第 ${window.currentPage} 页`;
+        }
+
+        function refreshPackages() {
+            showToast('正在刷新资源列表...', 'info');
+            setTimeout(() => {
+                showToast('刷新完成', 'success');
+            }, 1000);
+        }
+
+        function copyLink(link) {
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('CDN 链接已复制', 'success');
+            });
+        }
+
+        function deletePackage(id, name) {
+            if (confirm(`确定要删除 ${name} 吗？`)) {
+                window.allPackages = window.allPackages.filter(pkg => pkg.id !== id);
+                renderPackagesList(window.allPackages);
+                showToast(`已删除 ${name}`, 'success');
+            }
+        }
+
+        // Logs Page
+        function renderLogs() {
+            return `
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">操作日志</h1>
+                        <p class="page-subtitle">查看系统操作和转存记录</p>
+                    </div>
+                    <button class="btn ghost" onclick="exportLogs()">📥 导出日志</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">日志列表</h3>
+                    </div>
+                    <div class="card-content">
+                        <div style="margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+                            <select class="form-control" id="actionFilter" onchange="filterLogs()" style="width: 150px;">
+                                <option value="">所有操作</option>
+                                <option value="add">新增资源</option>
+                                <option value="delete">删除资源</option>
+                                <option value="update">更新资源</option>
+                                <option value="settings">系统设置</option>
+                            </select>
+                            <select class="form-control" id="statusFilter" onchange="filterLogs()" style="width: 150px;">
+                                <option value="">所有状态</option>
+                                <option value="success">成功</option>
+                                <option value="error">失败</option>
+                            </select>
+                            <input type="date" class="form-control" id="dateFilter" onchange="filterLogs()" style="width: 150px;">
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width: 15%;">操作时间</th>
+                                        <th style="width: 15%;">操作类型</th>
+                                        <th style="width: 35%;">操作详情</th>
+                                        <th style="width: 15%;">状态</th>
+                                        <th style="width: 20%;">备注</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${renderLogsList()}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination">
+                            <button class="pagination-item">←</button>
+                            <span style="padding: 8px 12px; color: var(--color-text-secondary);">第 1 页</span>
+                            <button class="pagination-item">→</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLogsList() {
+            const logs = [
+                { time: '2024-01-15 14:32:05', action: '新增资源', detail: 'vue@3.3.4 转存成功', status: 'success', remark: '-' },
+                { time: '2024-01-15 12:15:40', action: '系统设置', detail: 'CDN 域名更新', status: 'success', remark: '国内 CDN 域名' },
+                { time: '2024-01-14 09:47:22', action: '删除资源', detail: '删除 react@17.0.0', status: 'success', remark: '-' },
+                { time: '2024-01-13 16:21:10', action: '新增资源', detail: 'axios@1.6.2 转存成功', status: 'success', remark: '-' },
+                { time: '2024-01-12 11:08:35', action: '新增资源', detail: 'lodash@4.17.21 转存失败', status: 'error', remark: '入口文件未识别' },
+            ];
+
+            return logs.map(log => `
+                <tr>
+                    <td style="font-size: 12px; color: var(--color-text-tertiary);">${log.time}</td>
+                    <td>
+                        <span class="badge info">${log.action}</span>
+                    </td>
+                    <td>${log.detail}</td>
+                    <td>
+                        ${log.status === 'success' 
+                            ? '<span class="badge success">✓ 成功</span>' 
+                            : '<span class="badge error">✗ 失败</span>'}
+                    </td>
+                    <td style="font-size: 12px; color: var(--color-text-tertiary);">${log.remark}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterLogs() {
+            showToast('正在筛选日志...', 'info');
+        }
+
+        function exportLogs() {
+            showToast('日志已导出为 CSV 文件', 'success');
+        }
+
+        // Settings Page
+        function renderSettings() {
+            return `
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">系统设置</h1>
+                        <p class="page-subtitle">配置 CDN 域名、存储、缓存等选项</p>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('general')">基础设置</button>
+                    <button class="tab" onclick="switchTab('cdn')">CDN 配置</button>
+                    <button class="tab" onclick="switchTab('storage')">存储管理</button>
+                    <button class="tab" onclick="switchTab('security')">安全设置</button>
+                </div>
+
+                <div class="tab-content active" id="general">
+                    ${renderGeneralSettings()}
+                </div>
+                <div class="tab-content" id="cdn">
+                    ${renderCdnSettings()}
+                </div>
+                <div class="tab-content" id="storage">
+                    ${renderStorageSettings()}
+                </div>
+                <div class="tab-content" id="security">
+                    ${renderSecuritySettings()}
+                </div>
+            `;
+        }
+
+        function renderGeneralSettings() {
+            return `
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">基础信息</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-group">
+                            <label class="form-label">站点名称</label>
+                            <input type="text" class="form-control" value="TeavenCDN" placeholder="输入站点名称">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">站点描述</label>
+                            <input type="text" class="form-control" value="个人公共资源 CDN 收藏与管理系统" placeholder="输入站点描述">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">管理员邮箱</label>
+                            <input type="email" class="form-control" value="admin@example.com" placeholder="输入管理员邮箱">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">主题色</label>
+                            <input type="color" class="form-control" value="#0066cc" style="height: 40px; cursor: pointer;">
+                        </div>
+                        <button class="btn primary" onclick="saveSettings('general')">💾 保存设置</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCdnSettings() {
+            return `
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">CDN 加速域名</h3>
+                        <p class="card-subtitle">配置国内和海外 CDN 加速域名</p>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-group">
+                            <label class="form-label required">国内 CDN 域名</label>
+                            <input type="text" class="form-control" value="cdn.example.com" placeholder="例如：cdn.example.com">
+                            <div class="form-help">用于国内访问的 CDN 域名，需绑定到 Cloudflare R2</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">海外 CDN 域名</label>
+                            <input type="text" class="form-control" value="cdn-global.example.com" placeholder="例如：cdn-global.example.com">
+                            <div class="form-help">用于海外访问的 CDN 域名（可选）</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CORS 跨域配置</label>
+                            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                <label style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" checked style="cursor: pointer;">
+                                    <span>允许所有域名</span>
+                                </label>
+                                <label style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" style="cursor: pointer;">
+                                    <span>仅允许指定域名</span>
+                                </label>
+                            </div>
+                            <input type="text" class="form-control" placeholder="输入允许的域名，多个用逗号分隔" style="display: none;">
+                        </div>
+                        <button class="btn primary" onclick="saveSettings('cdn')">💾 保存设置</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStorageSettings() {
+            return `
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">存储统计</h3>
+                        <p class="card-subtitle">R2 对象存储使用情况</p>
+                    </div>
+                    <div class="card-content">
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 500;">存储空间使用率</span>
+                                <span style="color: var(--color-text-secondary);">2.4 GB / 5 GB (48%)</span>
+                            </div>
+                            <div style="height: 8px; background-color: var(--color-bg-secondary); border-radius: 4px; overflow: hidden;">
+                                <div style="height: 100%; width: 48%; background: linear-gradient(to right, var(--color-primary), #0052a3); border-radius: 4px;"></div>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+                            <div style="padding: 12px; background-color: var(--color-bg-secondary); border-radius: var(--radius-sm); text-align: center;">
+                                <div style="font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 4px;">已用空间</div>
+                                <div style="font-size: 18px; font-weight: 600; color: var(--color-text-primary);">2.4 GB</div>
+                            </div>
+                            <div style="padding: 12px; background-color: var(--color-bg-secondary); border-radius: var(--radius-sm); text-align: center;">
+                                <div style="font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 4px;">剩余空间</div>
+                                <div style="font-size: 18px; font-weight: 600; color: var(--color-text-primary);">2.6 GB</div>
+                            </div>
+                            <div style="padding: 12px; background-color: var(--color-bg-secondary); border-radius: var(--radius-sm); text-align: center;">
+                                <div style="font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 4px;">文件总数</div>
+                                <div style="font-size: 18px; font-weight: 600; color: var(--color-text-primary);">247</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">文件清理策略</label>
+                            <select class="form-control">
+                                <option>不清理</option>
+                                <option>清理 30 天未访问的文件</option>
+                                <option>清理 60 天未访问的文件</option>
+                                <option>清理 90 天未访问的文件</option>
+                            </select>
+                        </div>
+                        <button class="btn primary" onclick="saveSettings('storage')">💾 保存设置</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSecuritySettings() {
+            return `
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">安全设置</h3>
+                        <p class="card-subtitle">API Token 和访问控制</p>
+                    </div>
+                    <div class="card-content">
+                        <div class="form-group">
+                            <label class="form-label">管理员 Token</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" value="sk-****************************" readonly style="flex: 1;">
+                                <button class="btn ghost" onclick="regenerateToken()">🔄 重新生成</button>
+                            </div>
+                            <div class="form-help">用于 API 认证，请勿泄露</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">启用来源限制</label>
+                            <div style="display: flex; gap: 8px;">
+                                <label style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                                    <input type="radio" name="corsPolicy" checked style="cursor: pointer;">
+                                    <span>允许所有来源</span>
+                                </label>
+                                <label style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                                    <input type="radio" name="corsPolicy" style="cursor: pointer;">
+                                    <span>仅允许指定来源</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">启用请求日志</label>
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" checked style="cursor: pointer;">
+                                <span>记录所有资源请求</span>
+                            </label>
+                            <div class="form-help">启用后会记录详细的访问日志</div>
+                        </div>
+                        <button class="btn primary" onclick="saveSettings('security')">💾 保存设置</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function saveSettings(type) {
+            showToast(`${type === 'general' ? '基础' : type === 'cdn' ? 'CDN' : type === 'storage' ? '存储' : '安全'}设置已保存`, 'success');
+        }
+
+        function regenerateToken() {
+            if (confirm('确定要重新生成 Token 吗？旧 Token 将立即失效。')) {
+                showToast('Token 已重新生成，请妥善保管', 'success');
+            }
+        }
+
+        // ==================== Toast ====================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <span class="toast-icon">
+                        ${type === 'success' ? '✓' : type === 'error' ? '✕' : type === 'warning' ? '⚠' : 'ℹ'}
+                    </span>
+                    <span class="toast-text">${message}</span>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideInUp 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // ==================== Modal ====================
+        function showModal(title, content, footer = '') {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = content;
+            document.getElementById('modalFooter').innerHTML = footer;
+            document.getElementById('modal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('open');
+        }
+
+        // ==================== Initialization ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            goToPage('dashboard');
+
+            // Add menu toggle button for mobile
+            const menuToggle = document.querySelector('.menu-toggle');
+            if (isMobile()) {
+                menuToggle.style.display = 'flex';
+            }
+
+            window.addEventListener('resize', () => {
+                if (!isMobile()) {
+                    document.getElementById('sidebar').classList.remove('open');
+                    document.getElementById('sidebarOverlay').classList.remove('open');
+                }
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModal();
+            });
+        });
+
+        // Close sidebar when clicking content
+        document.addEventListener('click', (e) => {
+            if (isMobile() && !e.target.closest('.sidebar') && !e.target.closest('.menu-toggle')) {
+                closeSidebar();
+            }
+        });
+    </script>
+</body>
+</html>
