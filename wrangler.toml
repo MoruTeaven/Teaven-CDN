@@ -2,12 +2,6 @@ name = "cdn-manager"
 main = "src/index.ts"
 compatibility_date = "2024-04-03"
 
-[vars]
-CDN_DOMAIN = "cdn.xxx.com"
-GLOBAL_CDN_DOMAIN = "global-cdn.xxx.com"
-CORS_ORIGIN = "http://localhost:8787,https://teaven-cdn.moruteaven.qzz.io"
-# Configure ADMIN_TOKEN with: npx wrangler secret put ADMIN_TOKEN
-
 [[rules]]
 type = "Text"
 globs = ["**/*.html"]
@@ -22,7 +16,7 @@ bucket_name = "morutea-cdn"
 [[d1_databases]]
 binding = "DB"
 database_name = "cdn-manager"
-database_id = ""
+database_id = "c0ded3ae-f1ac-4cbb-a814-31d8d4637b26"
 
 [observability]
 enabled = false
