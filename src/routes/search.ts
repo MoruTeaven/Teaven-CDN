@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { searchPackages, getPackageVersion } from '../services/jsdelivr'
+import { searchPackages, searchPackagesFuzzy, getPackageVersion } from '../services/jsdelivr'
 
 const app = new Hono()
 
@@ -12,12 +12,34 @@ app.get('/', async (c) => {
     const pkg = await searchPackages(q)
     const latestVersion = pkg.tags?.latest || pkg.versions[0]
     return c.json({
+      type: 'exact',
       name: pkg.name,
       versions: pkg.versions.slice(0, 20),
       latest: latestVersion
     })
   } catch (e) {
     return c.json({ error: 'Package not found' }, 404)
+  }
+})
+
+app.get('/fuzzy', async (c) => {
+  const q = c.req.query('q')
+  if (!q) {
+    return c.json({ error: 'Query is required' }, 400)
+  }
+  try {
+    const result = await searchPackagesFuzzy(q)
+    return c.json({
+      type: 'fuzzy',
+      total: result.total,
+      packages: result.objects.map(item => ({
+        name: item.package.name,
+        version: item.package.version,
+        description: item.package.description || ''
+      }))
+    })
+  } catch (e) {
+    return c.json({ error: 'Search failed' }, 500)
   }
 })
 

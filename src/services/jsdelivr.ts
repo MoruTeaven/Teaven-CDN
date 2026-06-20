@@ -17,10 +17,32 @@ export interface JsDelivrPackageVersion {
   files: JsDelivrFile[]
 }
 
+export interface NpmSearchResult {
+  package: {
+    name: string
+    version: string
+    description?: string
+    keywords?: string[]
+  }
+}
+
+export interface NpmSearchResponse {
+  total: number
+  objects: NpmSearchResult[]
+}
+
 export async function searchPackages(q: string): Promise<JsDelivrPackage> {
   const response = await fetch(`https://data.jsdelivr.com/v1/package/npm/${encodeURIComponent(q)}`)
   if (!response.ok) {
     throw new Error('Package not found')
+  }
+  return await response.json()
+}
+
+export async function searchPackagesFuzzy(q: string): Promise<NpmSearchResponse> {
+  const response = await fetch(`https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(q)}&size=20`)
+  if (!response.ok) {
+    throw new Error('Search failed')
   }
   return await response.json()
 }
