@@ -1,21 +1,6 @@
 import { JsDelivrFile } from '../services/jsdelivr'
 
-const specialRules: Record<string, string> = {
-  'vue': 'dist/vue.global.prod.js',
-  'react': 'umd/react.production.min.js',
-  'react-dom': 'umd/react-dom.production.min.js',
-  'axios': 'dist/axios.min.js',
-  'dayjs': 'dayjs.min.js'
-}
-
 export function findEntryFile(name: string, files: JsDelivrFile[], defaultFile?: string): string | null {
-  if (specialRules[name]) {
-    const specialFile = files.find(f => f.name === specialRules[name])
-    if (specialFile) {
-      return specialFile.name
-    }
-  }
-
   if (defaultFile) {
     const df = files.find(f => f.name === defaultFile)
     if (df) {
