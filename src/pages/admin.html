@@ -412,6 +412,29 @@
         .tooltip::after { position: absolute; left: 50%; bottom: calc(100% + 8px); z-index: 70; width: max-content; max-width: 220px; padding: 7px 9px; border-radius: 9px; background: #061317; color: #ffffff; content: attr(data-tooltip); font-size: 12px; opacity: 0; pointer-events: none; transform: translate(-50%, 4px); transition: opacity 160ms var(--ease), transform 160ms var(--ease); }
         .tooltip:hover::after { opacity: 1; transform: translate(-50%, 0); }
 
+        .search-wrap { position: relative; width: 100%; max-width: 720px; }
+        .search-wrap .input { height: 48px; padding: 0 44px 0 16px; font-size: 15px; border-radius: 14px; border: 1px solid var(--border-strong); background: var(--surface-solid); }
+        .search-wrap .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12); }
+        .search-clear { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; display: none; place-items: center; border-radius: 8px; background: var(--surface-muted); color: var(--muted); cursor: pointer; font-size: 16px; border: 0; }
+        .search-clear:hover { background: var(--surface-hover); color: var(--heading); }
+        .search-clear.visible { display: grid; }
+
+        .search-dropdown { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 50; max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 16px; background: var(--surface-solid); box-shadow: var(--shadow-lg); display: none; }
+        .search-dropdown.open { display: block; animation: popIn 140ms var(--ease); }
+        .search-dropdown-header { padding: 10px 16px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 850; }
+        .search-dropdown-empty { padding: 32px 16px; text-align: center; color: var(--muted); }
+
+        .search-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; transition: background-color 120ms var(--ease); border-bottom: 1px solid var(--border); }
+        .search-item:last-child { border-bottom: 0; }
+        .search-item:hover, .search-item.active { background: rgba(var(--primary-rgb), 0.06); }
+        .search-item-icon { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; border-radius: 10px; background: rgba(var(--primary-rgb), 0.08); color: var(--primary); font-size: 14px; font-weight: 900; }
+        .search-item-body { flex: 1; min-width: 0; }
+        .search-item-name { color: var(--primary); font-size: 15px; font-weight: 900; }
+        .search-item-ver { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 6px; background: var(--surface-muted); color: var(--muted); font-size: 11px; font-weight: 850; vertical-align: middle; }
+        .search-item-desc { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+        .search-item-arrow { flex: 0 0 auto; color: var(--faint); font-size: 18px; opacity: 0; transition: opacity 120ms; }
+        .search-item:hover .search-item-arrow { opacity: 1; }
+
         .mt-16 { margin-top: 16px; }
         .mt-20 { margin-top: 20px; }
         .mb-0 { margin-bottom: 0; }
@@ -752,6 +775,9 @@
 
             if (!response.ok) {
                 const message = typeof payload === 'object' && payload && payload.error ? payload.error : `请求失败 (${response.status})`;
+                if (response.status === 401) {
+                    showLoginPage();
+                }
                 throw new ApiError(message, response.status);
             }
 
@@ -886,6 +912,9 @@
             } catch (error) {
                 state.health = null;
                 state.healthError = error.message || '健康检查失败';
+                if (error.status === 401) {
+                    showLoginPage();
+                }
             }
             updateShellStatus();
         }
@@ -916,6 +945,12 @@
 
             const failures = [statsResult, packagesResult, logsResult].filter(result => result.status === 'rejected');
             state.authError = failures.length ? failures[0].reason.message : '';
+            
+            // 如果有401错误，跳转到登录页面
+            if (failures.length && failures.some(f => f.reason.status === 401)) {
+                showLoginPage();
+                return;
+            }
 
             if (statsResult.status === 'fulfilled') state.stats = statsResult.value;
             if (packagesResult.status === 'fulfilled') state.packages = Array.isArray(packagesResult.value.packages) ? packagesResult.value.packages : [];
@@ -1109,12 +1144,35 @@
         }
 
         function renderSearch() {
+            const q = state.search.query;
+            const results = state.search.fuzzyResults;
+            const loading = state.search.loading;
+            const hasResult = state.search.result;
+            const showDropdown = (results.length > 0 || loading || state.search.error) && !hasResult;
+
             return `
-                ${pageHero('搜索转存', 'Search & Favorite', '搜索 npm 包的真实版本信息，并调用后端 /api/favorite 转存到 R2 与 D1。搜索结果来自当前 Worker 的搜索接口。', `<button class="btn" type="button" data-action="refresh"><i class="ri-refresh-line" aria-hidden="true"></i>刷新资源</button>`)}
+                ${pageHero('搜索转存', 'Search & Favorite', '输入关键词搜索 npm 包，从下拉列表选择后转存到 R2。', `<button class="btn" type="button" data-action="refresh"><i class="ri-refresh-line" aria-hidden="true"></i>刷新资源</button>`)}
                 <section class="card">
-                    <div class="card-header"><div><h2 class="card-title">搜索 npm 包</h2><div class="card-subtitle">GET /api/search?q=</div></div></div>
-                    <div class="form-grid">
-                        <label class="form-field full" id="searchField"><span class="form-label">包名称 <span class="required">*</span></span><div class="inline-actions"><input class="input" id="packageSearchInput" value="${escapeHtml(state.search.query)}" placeholder="输入 npm 包名"><button class="btn primary" type="button" data-action="search-package"><i class="ri-search-2-line" aria-hidden="true"></i>搜索</button></div><p class="help-text">该输入不会使用本地样例数据，只会请求 Worker API。</p><p class="error-text" id="searchErrorText">${escapeHtml(state.search.error)}</p></label>
+                    <div class="card-header"><div><h2 class="card-title">搜索 npm 包</h2><div class="card-subtitle">输入包名关键词，实时获取搜索建议</div></div></div>
+                    <div class="search-wrap" id="searchWrap">
+                        <input class="input" id="packageSearchInput" value="${escapeHtml(q)}" placeholder="搜索 npm 包，例如 fontawesome、lodash、react..." autocomplete="off">
+                        <button class="search-clear ${q ? 'visible' : ''}" type="button" data-action="clear-search" id="searchClearBtn"><i class="ri-close-line"></i></button>
+                        <div class="search-dropdown ${showDropdown ? 'open' : ''}" id="searchDropdown">
+                            ${loading ? '<div class="search-dropdown-header"><i class="ri-loader-4-line" style="animation:spin 1s linear infinite"></i> 搜索中...</div>' : ''}
+                            ${!loading && results.length > 0 ? `<div class="search-dropdown-header">找到 ${formatNumber(results.length)} 个相关包</div>` : ''}
+                            ${!loading && results.length > 0 ? results.map(pkg => `
+                                <div class="search-item" data-action="select-fuzzy-package" data-name="${escapeHtml(pkg.name)}">
+                                    <span class="search-item-icon">${escapeHtml(String(pkg.name || '?').replace(/^@[^/]+\//, '').slice(0, 1).toUpperCase())}</span>
+                                    <div class="search-item-body">
+                                        <div><span class="search-item-name">${escapeHtml(pkg.name)}</span><span class="search-item-ver">@${escapeHtml(pkg.version)}</span></div>
+                                        <div class="search-item-desc">${escapeHtml(pkg.description || '暂无描述')}</div>
+                                    </div>
+                                    <i class="ri-arrow-right-line search-item-arrow"></i>
+                                </div>
+                            `).join('') : ''}
+                            ${!loading && state.search.error && results.length === 0 ? `<div class="search-dropdown-empty"><i class="ri-search-line" style="font-size:28px;color:var(--faint);display:block;margin-bottom:8px"></i>${escapeHtml(state.search.error)}</div>` : ''}
+                            ${!loading && !state.search.error && results.length === 0 && q ? '<div class="search-dropdown-empty"><i class="ri-search-line" style="font-size:28px;color:var(--faint);display:block;margin-bottom:8px"></i>输入关键词开始搜索</div>' : ''}
+                        </div>
                     </div>
                 </section>
                 <section class="mt-16" id="searchResultRegion">${renderSearchResult()}</section>
@@ -1122,35 +1180,7 @@
         }
 
         function renderSearchResult() {
-            if (state.search.loading) return '<div class="card"><div class="skeleton"></div></div>';
-            if (state.search.error) return `<div class="notice error"><span class="icon-box"><i class="ri-close-circle-line" aria-hidden="true"></i></span><div><div class="primary-text">搜索失败</div><p class="text-muted mb-0">${escapeHtml(state.search.error)}</p></div></div>`;
-            if (!state.search.result && state.search.fuzzyResults.length === 0) return `<div class="card">${emptyState('等待搜索', '输入包名后，页面会展示真实版本列表和可转存操作。')}</div>`;
-
-            // 显示模糊搜索结果列表
-            if (!state.search.result && state.search.fuzzyResults.length > 0) {
-                return `
-                    <div class="card">
-                        <div class="card-header">
-                            <div><h2 class="card-title">搜索结果</h2><div class="card-subtitle">找到 ${formatNumber(state.search.fuzzyResults.length)} 个相关包</div></div>
-                            <span class="badge info">模糊搜索结果</span>
-                        </div>
-                        <div class="list-card">
-                            ${state.search.fuzzyResults.map(pkg => `
-                                <div class="list-item" style="cursor:pointer" data-action="select-fuzzy-package" data-name="${escapeHtml(pkg.name)}">
-                                    <div class="resource-cell">
-                                        <span class="resource-icon">${escapeHtml(String(pkg.name || '?').slice(0, 1).toUpperCase())}</span>
-                                        <div>
-                                            <div class="primary-text">${escapeHtml(pkg.name)}<span class="badge neutral" style="margin-left:8px">@${escapeHtml(pkg.version)}</span></div>
-                                            <div class="secondary-text">${escapeHtml(pkg.description || '暂无描述')}</div>
-                                        </div>
-                                    </div>
-                                    <i class="ri-arrow-right-line" style="color:var(--faint)"></i>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
+            if (!state.search.result) return '';
 
             const result = state.search.result;
             const versions = Array.isArray(result.versions) ? result.versions : [];
@@ -1159,7 +1189,7 @@
                 <div class="card">
                     <div class="card-header">
                         <div><h2 class="card-title">${escapeHtml(result.name)}</h2><div class="card-subtitle">Latest: ${escapeHtml(result.latest || '-')} · Versions: ${formatNumber(versions.length)}</div></div>
-                        <span class="badge info">真实搜索结果</span>
+                        <span class="badge info">已选择包</span>
                     </div>
                     <div class="form-grid">
                         <label class="form-field"><span class="form-label">选择版本 <span class="required">*</span></span><select class="select" id="versionSelect">${versions.map(version => `<option value="${escapeHtml(version)}" ${version === selected ? 'selected' : ''}>${escapeHtml(result.name)}@${escapeHtml(version)}</option>`).join('')}</select></label>
@@ -1562,38 +1592,106 @@
             state.search.error = '';
 
             if (!query) {
-                state.search.error = '请输入包名称。';
+                state.search.fuzzyResults = [];
                 renderPage('search');
                 return;
             }
 
             state.search.loading = true;
-            renderPage('search');
+            renderSearchDropdown();
 
             try {
-                // 先尝试精确匹配
-                try {
-                    const result = await apiRequest(`/api/search?q=${encodeURIComponent(query)}`);
-                    state.search.result = result;
-                    state.search.version = result.latest || (Array.isArray(result.versions) ? result.versions[0] : '') || '';
+                const fuzzyResult = await apiRequest(`/api/search/fuzzy?q=${encodeURIComponent(query)}`);
+                if (fuzzyResult.packages && fuzzyResult.packages.length > 0) {
+                    state.search.fuzzyResults = fuzzyResult.packages;
                     state.search.error = '';
-                    await loadVersionDetail(false);
-                } catch (exactError) {
-                    // 精确匹配失败，尝试模糊搜索
-                    const fuzzyResult = await apiRequest(`/api/search/fuzzy?q=${encodeURIComponent(query)}`);
-                    if (fuzzyResult.packages && fuzzyResult.packages.length > 0) {
-                        state.search.fuzzyResults = fuzzyResult.packages;
-                        state.search.error = '';
-                    } else {
-                        state.search.error = `未找到与 "${query}" 相关的包`;
-                    }
+                } else {
+                    state.search.fuzzyResults = [];
+                    state.search.error = `未找到与 "${query}" 相关的包`;
                 }
             } catch (error) {
+                state.search.fuzzyResults = [];
                 state.search.error = error.message || '搜索失败';
             } finally {
                 state.search.loading = false;
-                renderPage('search');
+                renderSearchDropdown();
             }
+        }
+
+        let searchDebounceTimer = null;
+        function onSearchInput(event) {
+            const value = event.target.value.trim();
+            state.search.query = value;
+            const clearBtn = $('#searchClearBtn');
+            if (clearBtn) clearBtn.classList.toggle('visible', !!value);
+
+            clearTimeout(searchDebounceTimer);
+            if (!value) {
+                state.search.fuzzyResults = [];
+                state.search.error = '';
+                state.search.loading = false;
+                renderSearchDropdown();
+                return;
+            }
+            searchDebounceTimer = setTimeout(() => searchPackage(), 300);
+        }
+
+        function renderSearchDropdown() {
+            const dropdown = $('#searchDropdown');
+            if (!dropdown) return;
+            const results = state.search.fuzzyResults;
+            const loading = state.search.loading;
+            const hasResult = state.search.result;
+            const q = state.search.query;
+
+            if (hasResult) {
+                dropdown.classList.remove('open');
+                return;
+            }
+
+            let html = '';
+            if (loading) {
+                html += '<div class="search-dropdown-header"><i class="ri-loader-4-line" style="animation:spin 1s linear infinite"></i> 搜索中...</div>';
+            }
+            if (!loading && results.length > 0) {
+                html += `<div class="search-dropdown-header">找到 ${formatNumber(results.length)} 个相关包</div>`;
+                html += results.map(pkg => `
+                    <div class="search-item" data-action="select-fuzzy-package" data-name="${escapeHtml(pkg.name)}">
+                        <span class="search-item-icon">${escapeHtml(String(pkg.name || '?').replace(/^@[^/]+\//, '').slice(0, 1).toUpperCase())}</span>
+                        <div class="search-item-body">
+                            <div><span class="search-item-name">${escapeHtml(pkg.name)}</span><span class="search-item-ver">@${escapeHtml(pkg.version)}</span></div>
+                            <div class="search-item-desc">${escapeHtml(pkg.description || '暂无描述')}</div>
+                        </div>
+                        <i class="ri-arrow-right-line search-item-arrow"></i>
+                    </div>
+                `).join('');
+            }
+            if (!loading && state.search.error && results.length === 0) {
+                html += `<div class="search-dropdown-empty"><i class="ri-search-line" style="font-size:28px;color:var(--faint);display:block;margin-bottom:8px"></i>${escapeHtml(state.search.error)}</div>`;
+            }
+            if (!loading && !state.search.error && results.length === 0 && q) {
+                html += '<div class="search-dropdown-empty"><i class="ri-search-line" style="font-size:28px;color:var(--faint);display:block;margin-bottom:8px"></i>输入关键词开始搜索</div>';
+            }
+
+            dropdown.innerHTML = html;
+            dropdown.classList.toggle('open', !!(loading || results.length > 0 || state.search.error));
+        }
+
+        function closeSearchDropdown() {
+            const dropdown = $('#searchDropdown');
+            if (dropdown) dropdown.classList.remove('open');
+        }
+
+        function clearSearch() {
+            const input = $('#packageSearchInput');
+            if (input) input.value = '';
+            state.search.query = '';
+            state.search.fuzzyResults = [];
+            state.search.error = '';
+            state.search.loading = false;
+            const clearBtn = $('#searchClearBtn');
+            if (clearBtn) clearBtn.classList.remove('visible');
+            renderSearchDropdown();
         }
 
         async function loadVersionDetail(showError = true) {
@@ -1612,9 +1710,10 @@
             state.search.loading = true;
             state.search.fuzzyResults = [];
             state.search.query = packageName;
+            state.search.error = '';
             const input = $('#packageSearchInput');
             if (input) input.value = packageName;
-            renderPage('search');
+            closeSearchDropdown();
 
             try {
                 const result = await apiRequest(`/api/search?q=${encodeURIComponent(packageName)}`);
@@ -1792,12 +1891,14 @@
             const control = event.target.closest('[data-action], [data-page]');
             if (!control) {
                 if (!event.target.closest('.dropdown-wrap')) closeDropdowns();
+                if (!event.target.closest('.search-wrap')) closeSearchDropdown();
                 return;
             }
 
             if (control.dataset.page) {
                 document.body.classList.remove('nav-open');
                 $('#mobileBackdrop').classList.remove('open');
+                closeSearchDropdown();
                 renderPage(control.dataset.page);
                 return;
             }
@@ -1817,6 +1918,7 @@
             if (action === 'logout') { handleLogout(); return; }
             if (action === 'refresh') await refreshData({ quiet: false });
             if (action === 'search-package') await searchPackage();
+            if (action === 'clear-search') { clearSearch(); return; }
             if (action === 'select-fuzzy-package') await selectFuzzyPackage(control.dataset.name);
             if (action === 'favorite-package') await favoritePackage();
             if (action === 'save-token') {
@@ -1886,6 +1988,10 @@
         });
 
         document.addEventListener('input', event => {
+            if (event.target.id === 'packageSearchInput') {
+                onSearchInput(event);
+                return;
+            }
             if (event.target.id === 'packageSearch') {
                 state.packageTable.search = event.target.value;
                 state.packageTable.page = 1;
@@ -1921,6 +2027,7 @@
                 closeModal();
                 closeDrawer();
                 closeDropdowns();
+                closeSearchDropdown();
                 document.body.classList.remove('nav-open');
                 $('#mobileBackdrop').classList.remove('open');
             }
@@ -1930,7 +2037,9 @@
                 renderPage('packages');
             }
             if (event.key === 'Enter' && event.target.id === 'packageSearchInput') {
+                clearTimeout(searchDebounceTimer);
                 await searchPackage();
+                closeSearchDropdown();
             }
             if (event.key === 'Enter' && event.target.id === 'loginTokenInput') {
                 await handleLogin();

@@ -23,6 +23,12 @@ export interface NpmSearchResult {
     version: string
     description?: string
     keywords?: string[]
+    date?: string
+    links?: {
+      npm?: string
+      homepage?: string
+      repository?: string
+    }
   }
 }
 

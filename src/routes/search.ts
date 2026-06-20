@@ -35,7 +35,8 @@ app.get('/fuzzy', async (c) => {
       packages: result.objects.map(item => ({
         name: item.package.name,
         version: item.package.version,
-        description: item.package.description || ''
+        description: item.package.description || '',
+        date: item.package.date || ''
       }))
     })
   } catch (e) {
