@@ -1033,12 +1033,6 @@
                         <button class="nav-item" type="button" data-page="search"><i class="ri-search-2-line" aria-hidden="true"></i><span class="nav-label">搜索转存</span></button>
                         <button class="nav-item" type="button" data-page="packages"><i class="ri-box-3-line" aria-hidden="true"></i><span class="nav-label">资源管理</span><span class="nav-badge" id="resourceCountBadge">0</span></button>
                         <button class="nav-item" type="button" data-page="logs"><i class="ri-file-list-3-line" aria-hidden="true"></i><span class="nav-label">日志中心</span></button>
-                    </div>
-                </div>
-                <div>
-                    <div class="nav-section-title">账户</div>
-                    <div class="nav-group">
-                        <button class="nav-item" type="button" data-page="account"><i class="ri-user-settings-line" aria-hidden="true"></i><span class="nav-label">用户中心</span></button>
                         <button class="nav-item" type="button" data-page="settings"><i class="ri-settings-3-line" aria-hidden="true"></i><span class="nav-label">系统设置</span></button>
                     </div>
                 </div>
@@ -1049,7 +1043,6 @@
                     <div class="sidebar-session-name" id="sidebarSessionName">未验证</div>
                     <div class="sidebar-session-role" id="sidebarSessionRole">Admin Token</div>
                 </div>
-                <button class="icon-btn compact" type="button" data-page="account" aria-label="进入用户中心"><i class="ri-arrow-right-line" aria-hidden="true"></i></button>
             </section>
         </aside>
 
@@ -1114,7 +1107,6 @@
             search: { title: '搜索转存', english: 'Search & Favorite' },
             packages: { title: '资源管理', english: 'Packages' },
             logs: { title: '日志中心', english: 'Audit Logs' },
-            account: { title: '用户中心', english: 'Admin Session' },
             settings: { title: '系统设置', english: 'Settings' }
         };
 
@@ -1311,7 +1303,7 @@
                         <div>
                             <div class="primary-text">无法读取受保护数据</div>
                             <p class="text-muted mb-0">${escapeHtml(message)}</p>
-                            <div class="inline-actions mt-16"><button class="btn" type="button" data-action="refresh">重试</button><button class="btn primary" type="button" data-page="account">检查 Token</button></div>
+                            <div class="inline-actions mt-16"><button class="btn" type="button" data-action="refresh">重试</button><button class="btn primary" type="button" data-page="settings">检查 Token</button></div>
                         </div>
                     </div>
                 `;
@@ -1323,9 +1315,9 @@
                     <div>
                         <div class="primary-text">需要管理 Token 才能读取真实业务数据</div>
                         <p class="text-muted mb-0">` +
-                            `后端的统计、资源、日志和转存接口均受 ADMIN_TOKEN 保护。请在用户中心保存 Token 后刷新。` +
+                            `后端的统计、资源、日志和转存接口均受 ADMIN_TOKEN 保护。请在系统设置中保存 Token 后刷新。` +
                         `</p>
-                        <div class="inline-actions mt-16"><button class="btn primary" type="button" data-page="account">前往用户中心</button></div>
+                        <div class="inline-actions mt-16"><button class="btn primary" type="button" data-page="settings">前往系统设置</button></div>
                     </div>
                 </div>
             `;
@@ -1840,33 +1832,6 @@
             `;
         }
 
-        function renderAccount() {
-            const tokenSaved = Boolean(state.token);
-            const healthStatus = state.health?.status === 'ok' ? '<span class="badge success">正常</span>' : state.healthError ? '<span class="badge error">不可用</span>' : '<span class="badge neutral">未知</span>';
-            const authStatus = !state.token ? '<span class="badge warning">未保存 Token</span>' : state.authError ? '<span class="badge error">接口未通过</span>' : '<span class="badge success">最近请求通过</span>';
-
-            return `
-                ${pageHero('用户中心', 'Admin Session', '管理 ADMIN_TOKEN 认证凭据与会话状态。Token 验证通过后即可访问仪表盘、资源管理、日志等受保护模块。', `<button class="btn danger" type="button" data-action="logout"><i class="ri-logout-box-r-line" aria-hidden="true"></i>退出登录</button>`)}
-                <section class="grid grid-2">
-                    <article class="card">
-                        <div class="card-header"><div><h2 class="card-title">管理 Token</h2><div class="card-subtitle">localStorage.admin_token</div></div>${authStatus}</div>
-                        <div class="form-grid">
-                            <label class="form-field full"><span class="form-label">ADMIN_TOKEN</span><input class="input" id="adminTokenInput" type="password" value="${escapeHtml(state.token)}" placeholder="输入 Cloudflare Worker 环境变量 ADMIN_TOKEN 对应值"><p class="help-text">Token 仅保存在当前浏览器 localStorage，用于调用受保护管理接口。</p></label>
-                        </div>
-                        <div class="inline-actions mt-16"><button class="btn primary" type="button" data-action="save-token"><i class="ri-save-line" aria-hidden="true"></i>保存并验证</button><button class="btn danger" type="button" data-action="clear-token"><i class="ri-delete-bin-line" aria-hidden="true"></i>清除 Token</button></div>
-                    </article>
-                    <article class="card">
-                        <div class="card-header"><div><h2 class="card-title">会话状态</h2><div class="card-subtitle">Real runtime state</div></div></div>
-                        <div class="list-card">
-                            <div class="list-item"><span>Token 状态</span><strong>${tokenSaved ? maskToken(state.token) : '未保存'}</strong></div>
-                            <div class="list-item"><span>Worker 健康检查</span>${healthStatus}</div>
-                            <div class="list-item"><span>受保护接口</span>${authStatus}</div>
-                            <div class="list-item"><span>最后加载时间</span><strong>${state.lastLoadedAt ? state.lastLoadedAt.toLocaleString('zh-CN') : '尚未加载'}</strong></div>
-                        </div>
-                    </article>
-                </section>
-            `;
-        }
 
         function renderSettings() {
             const mirrorOptions = Object.entries(MIRROR_SOURCES).map(([key, { label }]) => 
@@ -1935,6 +1900,24 @@
                         </div>
                     </article>
                 </section>
+                <section class="grid grid-2 mt-20">
+                    <article class="card">
+                        <div class="card-header"><div><h2 class="card-title">管理 Token</h2><div class="card-subtitle">localStorage.admin_token</div></div>${!state.token ? '<span class="badge warning">未保存 Token</span>' : state.authError ? '<span class="badge error">接口未通过</span>' : '<span class="badge success">最近请求通过</span>'}</div>
+                        <div class="form-grid">
+                            <label class="form-field full"><span class="form-label">ADMIN_TOKEN</span><input class="input" id="adminTokenInput" type="password" value="${escapeHtml(state.token)}" placeholder="输入 Cloudflare Worker 环境变量 ADMIN_TOKEN 对应值"><p class="help-text">Token 仅保存在当前浏览器 localStorage，用于调用受保护管理接口。</p></label>
+                        </div>
+                        <div class="inline-actions mt-16"><button class="btn primary" type="button" data-action="save-token"><i class="ri-save-line" aria-hidden="true"></i>保存并验证</button><button class="btn danger" type="button" data-action="clear-token"><i class="ri-delete-bin-line" aria-hidden="true"></i>清除 Token</button></div>
+                    </article>
+                    <article class="card">
+                        <div class="card-header"><div><h2 class="card-title">会话状态</h2><div class="card-subtitle">Real runtime state</div></div></div>
+                        <div class="list-card">
+                            <div class="list-item"><span>Token 状态</span><strong>${state.token ? maskToken(state.token) : '未保存'}</strong></div>
+                            <div class="list-item"><span>Worker 健康检查</span>${state.health?.status === 'ok' ? '<span class="badge success">正常</span>' : state.healthError ? '<span class="badge error">不可用</span>' : '<span class="badge neutral">未知</span>'}</div>
+                            <div class="list-item"><span>受保护接口</span>${!state.token ? '<span class="badge warning">未保存 Token</span>' : state.authError ? '<span class="badge error">接口未通过</span>' : '<span class="badge success">最近请求通过</span>'}</div>
+                            <div class="list-item"><span>最后加载时间</span><strong>${state.lastLoadedAt ? state.lastLoadedAt.toLocaleString('zh-CN') : '尚未加载'}</strong></div>
+                        </div>
+                    </article>
+                </section>
             `;
         }
 
@@ -1953,26 +1936,13 @@
         }
 
         function renderPage(page = state.page) {
-            if (page !== 'account' && page !== 'login' && !requireAuth(page)) return;
+            if (page !== 'login' && !requireAuth(page)) return;
 
             state.page = page;
             closeDropdowns();
             updateNavigation();
 
-            if (page === 'account') {
-                if (!$('#appShell').classList.contains('hidden')) {
-                    updateNavigation();
-                    renderAccount();
-                } else {
-                    showAdminShell();
-                    state.page = 'account';
-                    updateNavigation();
-                    renderAccount();
-                }
-                return;
-            }
-
-            const renderers = { dashboard: renderDashboard, search: renderSearch, packages: renderPackages, logs: renderLogs, account: renderAccount, settings: renderSettings };
+            const renderers = { dashboard: renderDashboard, search: renderSearch, packages: renderPackages, logs: renderLogs, settings: renderSettings };
             $('#mainContent').innerHTML = renderers[page]();
             if (page === 'packages') renderPackageTable();
             if (page === 'logs') renderLogTable();
@@ -2044,7 +2014,7 @@
         }
 
         function requireAuth(page) {
-            const publicPages = ['account', 'login'];
+            const publicPages = ['login'];
             if (!state.token && !publicPages.includes(page)) {
                 showLoginPage();
                 return false;
@@ -2101,9 +2071,10 @@
 
         function handleSkipLogin() {
             showAdminShell();
-            state.page = 'account';
+            state.page = 'settings';
             updateNavigation();
-            $('#mainContent').innerHTML = renderAccount();
+            $('#mainContent').innerHTML = renderSettings();
+            initSettingsEventListeners();
             $('#mainContent').focus({ preventScroll: true });
         }
 
@@ -2280,7 +2251,7 @@
 
         async function favoritePackage() {
             if (!state.token) {
-                showToast('请先在用户中心保存管理 Token', 'warning');
+                showToast('请先在系统设置中保存管理 Token', 'warning');
                 return;
             }
             
@@ -2585,7 +2556,6 @@
                 state.mirrorSource = event.target.value;
                 localStorage.setItem('teaven-mirror', state.mirrorSource);
                 showToast(`已切换到 ${MIRROR_SOURCES[state.mirrorSource]?.label || 'npm 官方'}`, 'success');
-                renderAccount();
             }
         });
 
