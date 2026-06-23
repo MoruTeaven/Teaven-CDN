@@ -1173,6 +1173,15 @@
             return state.token ? { Authorization: `Bearer ${state.token}` } : {};
         }
 
+        function isTokenError(error) {
+            const message = (error.message || '').toLowerCase();
+            return error.status === 401 || 
+                   message.includes('token') || 
+                   message.includes('admin_token') ||
+                   message.includes('unauthorized') ||
+                   message.includes('not configured');
+        }
+
         async function apiRequest(path, options = {}) {
             const headers = { ...authHeaders(), ...(options.headers || {}) };
             let body = options.body;
@@ -1187,10 +1196,12 @@
 
             if (!response.ok) {
                 const message = typeof payload === 'object' && payload && payload.error ? payload.error : `请求失败 (${response.status})`;
-                if (response.status === 401) {
+                const error = new ApiError(message, response.status);
+                if (isTokenError(error)) {
                     showLoginPage();
+                    showToast('Token 验证失败，请重新登录', 'error');
                 }
-                throw new ApiError(message, response.status);
+                throw error;
             }
 
             return payload;
@@ -1324,7 +1335,7 @@
             } catch (error) {
                 state.health = null;
                 state.healthError = error.message || '健康检查失败';
-                if (error.status === 401) {
+                if (isTokenError(error)) {
                     showLoginPage();
                 }
             }
@@ -1358,9 +1369,10 @@
             const failures = [statsResult, packagesResult, logsResult].filter(result => result.status === 'rejected');
             state.authError = failures.length ? failures[0].reason.message : '';
             
-            // 如果有401错误，跳转到登录页面
-            if (failures.length && failures.some(f => f.reason.status === 401)) {
+            // 如果有 token 相关错误，跳转到登录页面
+            if (failures.length && failures.some(f => isTokenError(f.reason))) {
                 showLoginPage();
+                showToast('Token 验证失败，请重新登录', 'error');
                 return;
             }
 
@@ -1922,6 +1934,15 @@
                 input.value = state.token;
                 setTimeout(() => input.focus(), 100);
             }
+            // 如果有 token 但验证失败，显示错误提示
+            if (state.token && state.authError) {
+                const errorBox = $('#loginError');
+                const errorText = $('#loginErrorText');
+                if (errorBox && errorText) {
+                    errorBox.classList.add('show');
+                    errorText.textContent = state.authError;
+                }
+            }
         }
 
         function showAdminShell() {
@@ -1960,7 +1981,12 @@
                 const response = await fetch('/api/stats', { headers });
                 if (!response.ok) {
                     const payload = await response.json().catch(() => ({}));
-                    throw new Error(payload.error || `验证失败 (${response.status})`);
+                    const errorMsg = payload.error || `验证失败 (${response.status})`;
+                    // 如果是 token 相关错误，显示更友好的提示
+                    if (response.status === 401 || errorMsg.toLowerCase().includes('token') || errorMsg.toLowerCase().includes('not configured')) {
+                        throw new Error('Token 无效或未配置，请检查 Worker 环境变量 ADMIN_TOKEN');
+                    }
+                    throw new Error(errorMsg);
                 }
                 state.token = token;
                 localStorage.setItem('admin_token', token);
@@ -2498,6 +2524,16 @@
                 renderPage('dashboard');
                 refreshData({ quiet: true });
             }
+
+            // 全局错误处理，捕获未处理的 token 相关错误
+            window.addEventListener('unhandledrejection', event => {
+                const error = event.reason;
+                if (error && isTokenError(error)) {
+                    event.preventDefault();
+                    showLoginPage();
+                    showToast('Token 验证失败，请重新登录', 'error');
+                }
+            });
         }
 
         init();
