@@ -41,6 +41,7 @@ app.get('/fuzzy', async (c) => {
       }))
     })
   } catch (e) {
+    console.error('Fuzzy search failed:', e instanceof Error ? e.message : e)
     const errorMessage = e instanceof Error ? e.message : '搜索失败'
     return c.json({ error: errorMessage }, 500)
   }
