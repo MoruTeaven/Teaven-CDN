@@ -2268,7 +2268,18 @@
             }
             
             const result = state.search.result;
-            const version = state.search.version;
+            const selectEl = $('#versionSelect');
+            const selectValue = selectEl?.value || '';
+            
+            // 版本选择器的值是纯版本号（如"4.7.0"），不包含包名前缀
+            const version = selectValue || state.search.version;
+            
+            console.log('[favorite] result:', result);
+            console.log('[favorite] selectEl:', selectEl);
+            console.log('[favorite] selectValue:', selectValue);
+            console.log('[favorite] state.search.version:', state.search.version);
+            console.log('[favorite] version:', version);
+            console.log('[favorite] result?.name:', result?.name);
             
             if (!result?.name || !version) {
                 showToast('缺少包名或版本', 'warning');
