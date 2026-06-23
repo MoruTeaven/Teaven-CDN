@@ -1116,9 +1116,15 @@
             account: { title: '用户中心', english: 'Admin Session' }
         };
 
+        const MIRROR_SOURCES = {
+            npmjs: { label: 'npm 官方', url: 'https://registry.npmjs.org' },
+            npmmirror: { label: '淘宝镜像', url: 'https://registry.npmmirror.com' }
+        };
+
         const state = {
             page: 'dashboard',
             token: localStorage.getItem('admin_token') || '',
+            mirrorSource: localStorage.getItem('teaven-mirror') || 'npmjs',
             loading: true,
             health: null,
             healthError: '',
@@ -1836,6 +1842,9 @@
             const tokenSaved = Boolean(state.token);
             const healthStatus = state.health?.status === 'ok' ? '<span class="badge success">正常</span>' : state.healthError ? '<span class="badge error">不可用</span>' : '<span class="badge neutral">未知</span>';
             const authStatus = !state.token ? '<span class="badge warning">未保存 Token</span>' : state.authError ? '<span class="badge error">接口未通过</span>' : '<span class="badge success">最近请求通过</span>';
+            const mirrorOptions = Object.entries(MIRROR_SOURCES).map(([key, { label }]) => 
+                `<option value="${key}" ${state.mirrorSource === key ? 'selected' : ''}>${label}</option>`
+            ).join('');
 
             return `
                 ${pageHero('用户中心', 'Admin Session', '管理 ADMIN_TOKEN 认证凭据与会话状态。Token 验证通过后即可访问仪表盘、资源管理、日志等受保护模块。', `<button class="btn danger" type="button" data-action="logout"><i class="ri-logout-box-r-line" aria-hidden="true"></i>退出登录</button>`)}
@@ -1854,6 +1863,27 @@
                             <div class="list-item"><span>Worker 健康检查</span>${healthStatus}</div>
                             <div class="list-item"><span>受保护接口</span>${authStatus}</div>
                             <div class="list-item"><span>最后加载时间</span><strong>${state.lastLoadedAt ? state.lastLoadedAt.toLocaleString('zh-CN') : '尚未加载'}</strong></div>
+                        </div>
+                    </article>
+                </section>
+                <section class="grid grid-2 mt-20">
+                    <article class="card">
+                        <div class="card-header"><div><h2 class="card-title">搜索设置</h2><div class="card-subtitle">npm Registry 镜像源</div></div></div>
+                        <div class="form-grid">
+                            <label class="form-field full">
+                                <span class="form-label">镜像源选择</span>
+                                <select class="select" id="mirrorSourceSelect">
+                                    ${mirrorOptions}
+                                </select>
+                                <p class="help-text">国内用户建议选择淘宝镜像以获得更快的搜索速度。切换后立即生效。</p>
+                            </label>
+                        </div>
+                    </article>
+                    <article class="card">
+                        <div class="card-header"><div><h2 class="card-title">当前镜像状态</h2><div class="card-subtitle">Mirror Status</div></div></div>
+                        <div class="list-card">
+                            <div class="list-item"><span>当前镜像</span><strong>${MIRROR_SOURCES[state.mirrorSource]?.label || 'npm 官方'}</strong></div>
+                            <div class="list-item"><span>镜像地址</span><strong class="mono" style="font-size:12px">${MIRROR_SOURCES[state.mirrorSource]?.url || 'https://registry.npmjs.org'}</strong></div>
                         </div>
                     </article>
                 </section>
@@ -2055,7 +2085,7 @@
             renderSearchDropdown();
 
             try {
-                const fuzzyResult = await apiRequest(`/api/search/fuzzy?q=${encodeURIComponent(query)}`);
+                const fuzzyResult = await apiRequest(`/api/search/fuzzy?q=${encodeURIComponent(query)}&mirror=${state.mirrorSource}`);
                 console.log('[search] fuzzyResult:', fuzzyResult);
                 if (fuzzyResult.packages && fuzzyResult.packages.length > 0) {
                     state.search.fuzzyResults = fuzzyResult.packages;
@@ -2068,6 +2098,7 @@
                 console.error('[search] error:', error);
                 state.search.fuzzyResults = [];
                 state.search.error = error.message || '搜索失败';
+                showToast(state.search.error, 'error');
             } finally {
                 state.search.loading = false;
                 renderSearchDropdown();
@@ -2486,6 +2517,12 @@
                 state.logTable.pageSize = Number(event.target.value);
                 state.logTable.page = 1;
                 await refreshData({ quiet: false });
+            }
+            if (event.target.id === 'mirrorSourceSelect') {
+                state.mirrorSource = event.target.value;
+                localStorage.setItem('teaven-mirror', state.mirrorSource);
+                showToast(`已切换到 ${MIRROR_SOURCES[state.mirrorSource]?.label || 'npm 官方'}`, 'success');
+                renderAccount();
             }
         });
 

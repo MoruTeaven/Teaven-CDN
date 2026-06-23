@@ -24,11 +24,12 @@ app.get('/', async (c) => {
 
 app.get('/fuzzy', async (c) => {
   const q = c.req.query('q')
+  const mirror = c.req.query('mirror') || 'npmjs'
   if (!q) {
     return c.json({ error: 'Query is required' }, 400)
   }
   try {
-    const result = await searchPackagesFuzzy(q)
+    const result = await searchPackagesFuzzy(q, mirror)
     return c.json({
       type: 'fuzzy',
       total: result.total,
@@ -40,7 +41,8 @@ app.get('/fuzzy', async (c) => {
       }))
     })
   } catch (e) {
-    return c.json({ error: 'Search failed' }, 500)
+    const errorMessage = e instanceof Error ? e.message : '搜索失败'
+    return c.json({ error: errorMessage }, 500)
   }
 })
 

@@ -37,6 +37,11 @@ export interface NpmSearchResponse {
   objects: NpmSearchResult[]
 }
 
+const MIRROR_URLS: Record<string, string> = {
+  npmjs: 'https://registry.npmjs.org',
+  npmmirror: 'https://registry.npmmirror.com'
+}
+
 export async function searchPackages(q: string): Promise<JsDelivrPackage> {
   const response = await fetch(`https://data.jsdelivr.com/v1/package/npm/${encodeURIComponent(q)}`)
   if (!response.ok) {
@@ -45,12 +50,32 @@ export async function searchPackages(q: string): Promise<JsDelivrPackage> {
   return await response.json()
 }
 
-export async function searchPackagesFuzzy(q: string): Promise<NpmSearchResponse> {
-  const response = await fetch(`https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(q)}&size=20`)
-  if (!response.ok) {
-    throw new Error('Search failed')
+export async function searchPackagesFuzzy(q: string, mirror: string = 'npmjs'): Promise<NpmSearchResponse> {
+  const baseUrl = MIRROR_URLS[mirror] || MIRROR_URLS.npmjs
+  const url = mirror === 'npmmirror'
+    ? `${baseUrl}/-/v1/search?text=${encodeURIComponent(q)}&size=20`
+    : `${baseUrl}/-/v1/search?text=${encodeURIComponent(q)}&size=20`
+  
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000)
+  
+  try {
+    const response = await fetch(url, { signal: controller.signal })
+    clearTimeout(timeoutId)
+    
+    if (!response.ok) {
+      const mirrorLabel = mirror === 'npmmirror' ? '淘宝镜像' : 'npm 官方'
+      throw new Error(`${mirrorLabel}请求失败 (${response.status})`)
+    }
+    return await response.json()
+  } catch (e) {
+    clearTimeout(timeoutId)
+    if (e instanceof Error && e.name === 'AbortError') {
+      const mirrorLabel = mirror === 'npmmirror' ? '淘宝镜像' : 'npm 官方'
+      throw new Error(`${mirrorLabel}请求超时，请尝试切换镜像源`)
+    }
+    throw e
   }
-  return await response.json()
 }
 
 export async function getPackageVersion(name: string, version: string): Promise<JsDelivrPackageVersion> {
