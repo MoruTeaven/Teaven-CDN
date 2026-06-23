@@ -1620,6 +1620,10 @@
             const versions = Array.isArray(result.versions) ? result.versions : [];
             const selected = state.search.version || result.latest || versions[0] || '';
             
+            console.log('[renderSearchResult] result:', JSON.stringify(result));
+            console.log('[renderSearchResult] versions:', versions);
+            console.log('[renderSearchResult] selected:', selected);
+            
             return `
                 <div class="card">
                     <div class="card-header">
