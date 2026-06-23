@@ -1039,6 +1039,7 @@
                     <div class="nav-section-title">账户</div>
                     <div class="nav-group">
                         <button class="nav-item" type="button" data-page="account"><i class="ri-user-settings-line" aria-hidden="true"></i><span class="nav-label">用户中心</span></button>
+                        <button class="nav-item" type="button" data-page="settings"><i class="ri-settings-3-line" aria-hidden="true"></i><span class="nav-label">系统设置</span></button>
                     </div>
                 </div>
             </nav>
@@ -1113,7 +1114,8 @@
             search: { title: '搜索转存', english: 'Search & Favorite' },
             packages: { title: '资源管理', english: 'Packages' },
             logs: { title: '日志中心', english: 'Audit Logs' },
-            account: { title: '用户中心', english: 'Admin Session' }
+            account: { title: '用户中心', english: 'Admin Session' },
+            settings: { title: '系统设置', english: 'Settings' }
         };
 
         const MIRROR_SOURCES = {
@@ -1842,9 +1844,6 @@
             const tokenSaved = Boolean(state.token);
             const healthStatus = state.health?.status === 'ok' ? '<span class="badge success">正常</span>' : state.healthError ? '<span class="badge error">不可用</span>' : '<span class="badge neutral">未知</span>';
             const authStatus = !state.token ? '<span class="badge warning">未保存 Token</span>' : state.authError ? '<span class="badge error">接口未通过</span>' : '<span class="badge success">最近请求通过</span>';
-            const mirrorOptions = Object.entries(MIRROR_SOURCES).map(([key, { label }]) => 
-                `<option value="${key}" ${state.mirrorSource === key ? 'selected' : ''}>${label}</option>`
-            ).join('');
 
             return `
                 ${pageHero('用户中心', 'Admin Session', '管理 ADMIN_TOKEN 认证凭据与会话状态。Token 验证通过后即可访问仪表盘、资源管理、日志等受保护模块。', `<button class="btn danger" type="button" data-action="logout"><i class="ri-logout-box-r-line" aria-hidden="true"></i>退出登录</button>`)}
@@ -1866,7 +1865,17 @@
                         </div>
                     </article>
                 </section>
-                <section class="grid grid-2 mt-20">
+            `;
+        }
+
+        function renderSettings() {
+            const mirrorOptions = Object.entries(MIRROR_SOURCES).map(([key, { label }]) => 
+                `<option value="${key}" ${state.mirrorSource === key ? 'selected' : ''}>${label}</option>`
+            ).join('');
+
+            return `
+                ${pageHero('系统设置', 'Settings', '配置系统参数和偏好设置。修改将立即生效并保存到本地存储。')}
+                <section class="grid grid-2">
                     <article class="card">
                         <div class="card-header"><div><h2 class="card-title">搜索设置</h2><div class="card-subtitle">npm Registry 镜像源</div></div></div>
                         <div class="form-grid">
@@ -1878,16 +1887,69 @@
                                 <p class="help-text">国内用户建议选择淘宝镜像以获得更快的搜索速度。切换后立即生效。</p>
                             </label>
                         </div>
+                        <div class="mt-16">
+                            <div class="notice">
+                                <i class="ri-information-line" style="font-size:18px;color:var(--primary);flex-shrink:0"></i>
+                                <div>
+                                    <strong>镜像源说明</strong>
+                                    <p class="help-text mt-4">npm 官方源在国内访问可能较慢，淘宝镜像同步频率为每 10 分钟一次，与官方源保持一致。</p>
+                                </div>
+                            </div>
+                        </div>
                     </article>
                     <article class="card">
                         <div class="card-header"><div><h2 class="card-title">当前镜像状态</h2><div class="card-subtitle">Mirror Status</div></div></div>
                         <div class="list-card">
                             <div class="list-item"><span>当前镜像</span><strong>${MIRROR_SOURCES[state.mirrorSource]?.label || 'npm 官方'}</strong></div>
                             <div class="list-item"><span>镜像地址</span><strong class="mono" style="font-size:12px">${MIRROR_SOURCES[state.mirrorSource]?.url || 'https://registry.npmjs.org'}</strong></div>
+                            <div class="list-item"><span>同步频率</span><strong>${state.mirrorSource === 'npmmirror' ? '每 10 分钟' : '实时'}</strong></div>
+                            <div class="list-item"><span>适用场景</span><strong>${state.mirrorSource === 'npmmirror' ? '国内用户推荐' : '海外用户推荐'}</strong></div>
+                        </div>
+                    </article>
+                </section>
+                <section class="grid grid-2 mt-20">
+                    <article class="card">
+                        <div class="card-header"><div><h2 class="card-title">外观设置</h2><div class="card-subtitle">Theme Settings</div></div></div>
+                        <div class="form-grid">
+                            <label class="form-field full">
+                                <span class="form-label">主题模式</span>
+                                <div class="tabs" id="themeTabs">
+                                    <button class="tab-btn ${document.documentElement.dataset.theme !== 'dark' ? 'active' : ''}" type="button" data-action="set-theme" data-theme="light">
+                                        <i class="ri-sun-line" aria-hidden="true"></i> 浅色
+                                    </button>
+                                    <button class="tab-btn ${document.documentElement.dataset.theme === 'dark' ? 'active' : ''}" type="button" data-action="set-theme" data-theme="dark">
+                                        <i class="ri-moon-line" aria-hidden="true"></i> 深色
+                                    </button>
+                                </div>
+                                <p class="help-text">切换明暗主题，或使用系统偏好自动选择。</p>
+                            </label>
+                        </div>
+                    </article>
+                    <article class="card">
+                        <div class="card-header"><div><h2 class="card-title">关于系统</h2><div class="card-subtitle">About TeavenCDN</div></div></div>
+                        <div class="list-card">
+                            <div class="list-item"><span>系统版本</span><strong>v1.0.0</strong></div>
+                            <div class="list-item"><span>运行平台</span><strong>Cloudflare Worker</strong></div>
+                            <div class="list-item"><span>存储服务</span><strong>R2 + D1</strong></div>
+                            <div class="list-item"><span>框架</span><strong>Hono</strong></div>
                         </div>
                     </article>
                 </section>
             `;
+        }
+
+        function initSettingsEventListeners() {
+            const themeTabs = document.querySelectorAll('#themeTabs [data-action="set-theme"]');
+            themeTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const theme = tab.dataset.theme;
+                    applyTheme(theme);
+                    localStorage.setItem('teaven-theme', theme);
+                    document.querySelectorAll('#themeTabs .tab-btn').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    showToast(theme === 'dark' ? '已切换为深色模式' : '已切换为浅色模式', 'success');
+                });
+            });
         }
 
         function renderPage(page = state.page) {
@@ -1910,10 +1972,11 @@
                 return;
             }
 
-            const renderers = { dashboard: renderDashboard, search: renderSearch, packages: renderPackages, logs: renderLogs, account: renderAccount };
+            const renderers = { dashboard: renderDashboard, search: renderSearch, packages: renderPackages, logs: renderLogs, account: renderAccount, settings: renderSettings };
             $('#mainContent').innerHTML = renderers[page]();
             if (page === 'packages') renderPackageTable();
             if (page === 'logs') renderLogTable();
+            if (page === 'settings') initSettingsEventListeners();
             $('#mainContent').focus({ preventScroll: true });
         }
 
