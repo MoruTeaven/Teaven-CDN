@@ -2040,6 +2040,8 @@
                 state.search.result = null;
                 state.search.fuzzyResults = [];
                 state.search.versionDetail = null;
+                const resultRegion = $('#searchResultRegion');
+                if (resultRegion) resultRegion.innerHTML = '';
             }
             state.search.error = '';
 
