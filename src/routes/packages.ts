@@ -12,6 +12,39 @@ interface Env {
 
 const app = new Hono<{ Bindings: Env }>()
 
+app.get('/search', async (c) => {
+  const q = c.req.query('q') || ''
+  const page = Math.max(parseInt(c.req.query('page') || '1'), 1)
+  const pageSize = Math.min(Math.max(parseInt(c.req.query('pageSize') || '20'), 1), 100)
+  const offset = (page - 1) * pageSize
+
+  let query = 'SELECT * FROM packages'
+  let countQuery = 'SELECT COUNT(*) as total FROM packages'
+  const params: string[] = []
+
+  if (q) {
+    query += ' WHERE name LIKE ?'
+    countQuery += ' WHERE name LIKE ?'
+    params.push(`%${q}%`)
+  }
+
+  query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
+
+  const [result, countResult] = await Promise.all([
+    c.env.DB.prepare(query).bind(...params, pageSize, offset).all(),
+    c.env.DB.prepare(countQuery).bind(...params).first()
+  ])
+
+  return c.json({
+    packages: (result.results as PackageRecord[]).map(pkg => withCdnUrls(pkg, c.env)),
+    pagination: {
+      page,
+      pageSize,
+      total: (countResult as any)?.total || 0
+    }
+  })
+})
+
 app.use('*', requireAdmin)
 
 app.get('/', async (c) => {
