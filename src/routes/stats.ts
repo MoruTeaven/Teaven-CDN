@@ -23,18 +23,16 @@ app.get('/', async (c) => {
       'SELECT COALESCE(SUM(file_size), 0) as total_size FROM packages'
     ).first<{ total_size: number }>()
 
-    const thisMonth = new Date()
-    thisMonth.setDate(1)
-    thisMonth.setHours(0, 0, 0, 0)
+    const now = new Date()
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const monthStart = thisMonth.toISOString()
+
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const lastMonthStart = lastMonth.toISOString()
 
     const newThisMonth = await c.env.DB.prepare(
       'SELECT COUNT(*) as count FROM packages WHERE created_at >= ?'
     ).bind(monthStart).first<{ count: number }>()
-
-    const lastMonth = new Date(thisMonth)
-    lastMonth.setMonth(lastMonth.getMonth() - 1)
-    const lastMonthStart = lastMonth.toISOString()
 
     const newLastMonth = await c.env.DB.prepare(
       'SELECT COUNT(*) as count FROM packages WHERE created_at >= ? AND created_at < ?'
@@ -42,10 +40,11 @@ app.get('/', async (c) => {
 
     let todayActions = 0
     try {
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
       const recentLogs = await c.env.DB.prepare(
-        "SELECT * FROM logs WHERE action = 'add' AND created_at >= date('now', '-1 day') ORDER BY created_at DESC"
-      ).all()
-      todayActions = recentLogs?.results?.length || 0
+        'SELECT COUNT(*) as count FROM logs WHERE action = ? AND created_at >= ?'
+      ).bind('add', oneDayAgo).first<{ count: number }>()
+      todayActions = recentLogs?.count || 0
     } catch {
       // logs 表可能不存在
     }
@@ -68,7 +67,8 @@ app.get('/', async (c) => {
       todayActions
     })
   } catch (e) {
-    return c.json({ error: (e as Error).message }, 500)
+    console.error('Stats error:', e)
+    return c.json({ error: (e as Error).message, stack: (e as Error).stack }, 500)
   }
 })
 

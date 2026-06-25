@@ -58,7 +58,7 @@ app.post('/', async (c) => {
     const contentLength = response.headers.get('content-length')
     const contentType = response.headers.get('content-type') || 'application/javascript'
 
-    const filePath = `/npm/${name}/${version}/${entryFile.split('/').pop()}`
+    const filePath = `npm/${name}/${version}/${entryFile.split('/').pop()}`
     const fileName = entryFile.split('/').pop() || entryFile
 
     await c.env.R2_BUCKET.put(filePath, blob, {

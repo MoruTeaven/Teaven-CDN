@@ -78,12 +78,31 @@ export async function searchPackagesFuzzy(q: string, mirror: string = 'npmjs'): 
   }
 }
 
+function flattenFiles(items: any[], prefix = ''): JsDelivrFile[] {
+  const result: JsDelivrFile[] = []
+  for (const item of items) {
+    const path = prefix ? `${prefix}/${item.name}` : item.name
+    if (item.type === 'directory' && item.files) {
+      result.push(...flattenFiles(item.files, path))
+    } else {
+      result.push({ name: path, hash: item.hash || '', size: item.size || 0 })
+    }
+  }
+  return result
+}
+
 export async function getPackageVersion(name: string, version: string): Promise<JsDelivrPackageVersion> {
   const response = await fetch(`https://data.jsdelivr.com/v1/package/npm/${encodeURIComponent(name)}@${encodeURIComponent(version)}`)
   if (!response.ok) {
     throw new Error('Version not found')
   }
-  return await response.json()
+  const data = await response.json()
+  return {
+    name: data.name,
+    version: data.version,
+    default: data.default,
+    files: flattenFiles(data.files || [])
+  }
 }
 
 export function getFileUrl(name: string, version: string, file: string): string {
